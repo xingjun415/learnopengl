@@ -107,8 +107,8 @@ int main() {
     }
     unsigned int vaoId = getVAO();
 
-    unsigned int texture1 = loadTexture("../../imgs/container.jpg");
-    unsigned int texture2 = loadTexture("../../imgs/awesomeface.png");
+    unsigned int texture1 = loadTexture("../../../imgs/container.jpg");
+    unsigned int texture2 = loadTexture("../../../imgs/awesomeface.png");
 
     NAMESPACE_NAME::Shader shader("./vertex_shader.vs", "./frag_shader.fs");
 
