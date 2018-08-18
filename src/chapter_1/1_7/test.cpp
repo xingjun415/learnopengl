@@ -1,13 +1,5 @@
-#include <iostream>
 #include <math.h>
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtc/type_ptr.hpp"
-
-#include "stb/stb_image.h"
-#include "shader.h"
+#include "common_include.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
@@ -121,7 +113,7 @@ int main() {
 
     while(!glfwWindowShouldClose(window)) {
         processInput(window);
-        glClearColor(0.2f, 0.3f, -.3f, 1.0f);
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         glActiveTexture(GL_TEXTURE0);

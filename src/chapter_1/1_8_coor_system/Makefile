@@ -9,7 +9,7 @@ SRC_DIR = $(PROJECT_ROOT_DIR)/src
 LIB_DIR = $(SRC_DIR)/build
 THIRTY_PARTY_LIB = $(LIB_DIR)/glad.o $(LIB_DIR)/stb_image.o $(LIB_DIR)/shader.o
 
-TARGET = test
+TARGET = coor_system
 
 $(TARGET): $(TARGET).o $(THIRTY_PARTY_LIB)
 	$(CC) $(CFLAGS) -o $(TARGET) $(TARGET).o $(THIRTY_PARTY_LIB) $(LIBS)
