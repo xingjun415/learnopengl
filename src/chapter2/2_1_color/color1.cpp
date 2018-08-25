@@ -1,22 +1,21 @@
 #include "common_include.h"
 
+#include "camera.h"
+
 int screenWidth = 800;
 int screenHeight = 600;
 
 std::string img_dir("../../../imgs/");
 
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3( 0.0f, 1.0f, 0.0f);
-
+Camera camera(glm::vec3(0.0f, 0.0f, 5.0f));
 float deltaFrame = 0.0f;
 float lastFrame = 0.0f;
 
 // mouse attributes
 float lastX = screenWidth / 2.0f, lastY = screenHeight / 2.0f;
-float yaw = -90.0f, pitch = 0.0f;
 bool firstMouse = true;
-float fov = 45.0f;
+
+glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
 unsigned int loadTexture(const std::string& img_path) {
     int width,height, nrChannels;
@@ -43,8 +42,6 @@ unsigned int loadTexture(const std::string& img_path) {
 }
 
 void processInput(GLFWwindow* window) {
-    float cameraSpeed = 2.5f * deltaFrame;
-
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }
@@ -53,16 +50,16 @@ void processInput(GLFWwindow* window) {
         glClear(GL_COLOR_BUFFER_BIT);
     }
     if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        cameraPos += cameraSpeed * cameraFront;
+        camera.ProcessKeyboard(FORWARD, deltaFrame);
     }
     if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        cameraPos -= cameraSpeed * cameraFront;
+        camera.ProcessKeyboard(BACKWARD, deltaFrame);
     }
     if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+        camera.ProcessKeyboard(LEFT, deltaFrame);
     }
     if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+        camera.ProcessKeyboard(RIGHT, deltaFrame);
     }
 }
 
@@ -76,31 +73,11 @@ void mouse_callback(GLFWwindow* window, double xPos, double yPos) {
     float yoffset = lastY - yPos;
     lastX = xPos;
     lastY = yPos;
-
-    float sensitivity = 0.05f;
-    xoffset *= sensitivity;
-    yoffset *= sensitivity;
-    
-    yaw += xoffset;
-    pitch += yoffset;
-    
-    pitch = pitch > 89.0f ? 89.0f : pitch;
-    pitch = pitch < -89.0f ? -89.0f : pitch;
-
-    glm::vec3 front;
-    front.x = cos(glm::radians(pitch)) * cos(glm::radians(yaw));
-    front.y = sin(glm::radians(pitch));
-    front.z = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
-    cameraFront = glm::normalize(front);
+    camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-    if( fov >= 1.0f && fov <= 45.0f ) 
-        fov -= yoffset;
-    if ( fov <= 1.0f )
-        fov = 1.0f;
-    if( fov >= 45.0f ) 
-        fov = 45.0f;
+    camera.ProcessMouseScroll(yoffset);
 }
 
 int main() {
@@ -164,18 +141,13 @@ int main() {
     -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
     };
     
-    unsigned int vaoId;
-    glGenVertexArrays(1, &vaoId);
+    unsigned int boxVao;
+    glGenVertexArrays(1, &boxVao);
 
     unsigned int vboId;
     glGenBuffers(1, &vboId);
 
-    /*
-    unsigned int eboId;
-    glGenBuffers(1, &eboId);
-    */
-
-    glBindVertexArray(vaoId);
+    glBindVertexArray(boxVao);
 
     glBindBuffer(GL_ARRAY_BUFFER, vboId);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
@@ -183,23 +155,19 @@ int main() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)( 3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
+    unsigned int lightVao;
+    glGenVertexArrays(1, &lightVao);
+    glBindVertexArray(lightVao);
+    glBindBuffer(GL_ARRAY_BUFFER, vboId);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
 
-    /*
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eboId);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-    */
 
-    glBindVertexArray(0);
-
-    unsigned int texture1 = loadTexture(img_dir + std::string("container.jpg"));
-    unsigned int texture2 = loadTexture(img_dir + std::string("awesomeface.png"));
-
-    NAMESPACE_NAME::Shader shader("./ver.vs", "./frag.fs");
-    shader.use();
-    shader.setInt("texture1", 0);
-    shader.setInt("texture2", 1);
+    NAMESPACE_NAME::Shader boxShader("./light.vs", "./box.fs");
+    NAMESPACE_NAME::Shader lightShader("./light.vs", "./light.fs");
+    boxShader.use();
+    boxShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+    boxShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 
     glViewport( 0, 0, screenWidth, screenHeight);
     glEnable(GL_DEPTH_TEST);
@@ -217,43 +185,37 @@ int main() {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture1);
+        boxShader.use();
 
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2);
+        glm::mat4 view = camera.GetViewMatrix();
 
-        shader.use();
-        glBindVertexArray(vaoId);
+        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)screenWidth / screenHeight, 0.1f, 100.0f);
+        glm::mat4 model(1.0f);
+        boxShader.setMat4("view", view);
+        boxShader.setMat4("projection", projection);
+        boxShader.setMat4("model", model);
+        boxShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+        boxShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 
-        std::cout << "Front : " << cameraFront.x << ", " << cameraFront.y << ", " << cameraFront.z << std::endl;
-        glm::mat4 view(1.0f);
-        view = glm::lookAt( cameraPos, cameraPos + cameraFront, cameraUp);
+        glBindVertexArray(boxVao);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
-        glm::mat4 projection(1.0f);
-        projection = glm::perspective(glm::radians(fov), (float)screenWidth / screenHeight, 0.1f, 100.0f);
-
-        shader.setMat4("view", view);
-        shader.setMat4("projection", projection);
-
-        for( int index = 0; index < 10; ++index ) {
-            glm::mat4 model(1.0f);
-            model = glm::translate(model, cubePositions[index]);
-            float angle = index * 20.0f;
-            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-
-            shader.setMat4("model", model);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
-
-        glBindVertexArray(0);
+        lightShader.use();
+        lightShader.setMat4("view", view);
+        lightShader.setMat4("projection", projection);
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, lightPos);
+        model = glm::scale(model, glm::vec3(0.2f));
+        lightShader.setMat4("model", model);
+        glBindVertexArray(lightVao);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
     
     glDeleteBuffers(1, &vboId);
-    glDeleteVertexArrays(1, &vaoId);
+    glDeleteVertexArrays(1, &boxVao);
     glfwTerminate();
     return 0;
 }

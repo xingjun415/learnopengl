@@ -90,4 +90,9 @@ void Shader::setMat4(const std::string& name, glm::mat4& matInput) const {
     glUniformMatrix4fv(iloc, 1, GL_FALSE, glm::value_ptr(matInput));
 }
 
+void Shader::setVec3(const std::string& name, float v1, float v2, float v3) const {
+    int iloc = glGetUniformLocation(id, name.c_str());
+    glUniform3f(iloc, v1, v2, v3);
+}
+
 NAMESPACE_END
