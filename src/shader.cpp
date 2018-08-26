@@ -95,4 +95,8 @@ void Shader::setVec3(const std::string& name, float v1, float v2, float v3) cons
     glUniform3f(iloc, v1, v2, v3);
 }
 
+void Shader::setVec3(const std::string& name, glm::vec3& vec) const {
+    this->setVec3(name, vec.x, vec.y, vec.z);
+}
+
 NAMESPACE_END
