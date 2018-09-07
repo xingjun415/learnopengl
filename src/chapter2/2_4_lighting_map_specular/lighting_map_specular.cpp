@@ -159,7 +159,7 @@ int main() {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3*sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
     unsigned int lightVao;
@@ -170,6 +170,7 @@ int main() {
     glEnableVertexAttribArray(0);
 
     NAMESPACE_NAME::Shader boxShader("./box.vs", "./box.fs");
+    boxShader.use();
     boxShader.setInt("material.diffuse", 0);
     boxShader.setInt("material.specular", 1);
     
@@ -200,12 +201,12 @@ int main() {
 
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)screenWidth / screenHeight, 0.1f, 100.0f);
         glm::mat4 model(1.0f);
-        //model = glm::rotate( model, glm::radians(30.0f), glm::vec3(1.0f, 1.0f, 1.0f));
+        float angle = glfwGetTime() * 40.0f;
+        model = glm::rotate( model, glm::radians(angle), glm::vec3(1.0f, 1.0f, 1.0f));
         boxShader.setMat4("view", view);
         boxShader.setMat4("projection", projection);
         boxShader.setMat4("model", model);
-        boxShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
-        boxShader.setFloat("material.shininess", 32.0f);
+        boxShader.setFloat("material.shininess", 35.0f);
 
         glm::vec3 lightColor(1.0f);
         /*

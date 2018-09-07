@@ -20,6 +20,7 @@ all: $(LIB_DIR)/glad.o $(LIB_DIR)/stb_image.o $(LIB_DIR)/shader.o
 
 
 $(LIB_DIR)/glad.o: $(GLAD_DIR)/glad.c $(GLAD_DIR)/glad.h
+	-mkdir build
 	$(CC) $(CFLAGS) -c $(GLAD_DIR)/glad.c -o $(LIB_DIR)/glad.o $(INCLUDES)
 
 $(LIB_DIR)/stb_image.o: $(STB_DIR)/stb_image.cpp $(STB_DIR)/stb_image.h
